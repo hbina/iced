@@ -1,0 +1,23 @@
+[package]
+name = "wireshart"
+version = "0.1.0"
+authors = ["Songtronix <contact@songtronix.com>", "Folyd <lyshuhow@gmail.com>"]
+edition = "2021"
+publish = false
+
+[dependencies]
+async-std = "1.13.0"
+etherparse = "0.16.0"
+iced.features = ["tokio"]
+iced.workspace = true
+once_cell.workspace = true
+# pcap-parser = "0.16.0"
+pcap-parser = { path = "/home/hbina085/git/pcap-parser" }
+bytemuck = "1.20.0"
+memmap2 = "0.9.5"
+smol_str.workspace = true
+
+[dependencies.reqwest]
+version = "0.12"
+default-features = false
+features = ["stream", "rustls-tls"]
