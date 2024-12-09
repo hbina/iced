@@ -16,6 +16,7 @@ pcap-parser = { path = "/home/hbina085/git/pcap-parser" }
 bytemuck = "1.20.0"
 memmap2 = "0.9.5"
 smol_str.workspace = true
+async-trait = "0.1.83"
 
 [dependencies.reqwest]
 version = "0.12"
