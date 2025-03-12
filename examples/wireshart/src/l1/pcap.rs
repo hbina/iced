@@ -1,4 +1,5 @@
-use iced::futures::{SinkExt, Stream, StreamExt};
+use iced::futures::channel::mpsc;
+use iced::futures::{SinkExt, Stream};
 use iced::stream::try_channel;
 use pcap_parser::traits::PcapReaderIterator;
 use pcap_parser::{LegacyPcapReader, PcapError};
@@ -68,7 +69,7 @@ impl Iterator for PcapPointerIterator {
                                 })
                             }
                             pcap_parser::Block::SimplePacket(b) => {
-                                 Some(PcapPointer {
+                                Some(PcapPointer {
                                     reader: self.reader.clone(),
                                     pcap_offset: self.pcap_offset,
                                     pcap_len: b.data.len(),
@@ -77,7 +78,7 @@ impl Iterator for PcapPointerIterator {
                             _ => None,
                         },
                         pcap_parser::PcapBlockOwned::Legacy(b) => {
-                             Some(PcapPointer {
+                            Some(PcapPointer {
                                 reader: self.reader.clone(),
                                 pcap_offset: self.pcap_offset,
                                 pcap_len: b.data.len(),
@@ -108,7 +109,7 @@ impl Iterator for PcapPointerIterator {
 pub fn process_pcap(
     file_path: &'static str,
 ) -> impl Stream<Item = Result<PcapPointer, String>> {
-    try_channel(1, move |mut output| async move {
+    try_channel(1, move |mut output: mpsc::Sender<PcapPointer>| async move {
         for pcap in PcapPointerIterator::new(file_path) {
             output.send(pcap).await.unwrap();
         }

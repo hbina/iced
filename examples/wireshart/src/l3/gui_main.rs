@@ -1,5 +1,4 @@
-static SCROLLABLE_ID: once_cell::sync::Lazy<iced::widget::scrollable::Id> =
-    once_cell::sync::Lazy::new(iced::widget::scrollable::Id::unique);
+const SCROLLABLE_ID: &str = "scrollable";
 
 #[derive(Debug)]
 pub struct MainGui {
@@ -9,6 +8,10 @@ pub struct MainGui {
 }
 
 impl MainGui {
+    pub fn new() -> (Self, iced::Task<crate::l2::core::MainGuiMessage>) {
+        (Self::default(), iced::Task::none())
+    }
+
     pub fn update(
         &mut self,
         message: crate::l2::core::MainGuiMessage,
@@ -39,7 +42,7 @@ impl MainGui {
         &mut self,
     ) -> iced::Task<Result<crate::l1::pcap::PcapPointer, String>> {
         let (task, _) = iced::Task::stream(crate::l1::pcap::process_pcap(
-            "/home/hbina085/Downloads/20220103_IEXTP1_TOPS1.6.pcap",
+            "/home/hbina085/Downloads/sample.pcap",
         ))
         .abortable();
         task
@@ -54,7 +57,7 @@ impl MainGui {
         self.rows.push(new_progress);
     }
 
-    pub fn view(&self) -> iced::Element<crate::l2::core::MainGuiMessage> {
+    pub fn view(&self) -> iced::Element<'_, crate::l2::core::MainGuiMessage> {
         // let rows = Column::with_children(
         //     self.rows
         //         .iter()
@@ -77,7 +80,7 @@ impl MainGui {
             ))
             .width(iced::Fill)
             .height(iced::Fill)
-            .id(SCROLLABLE_ID.clone());
+            .id(SCROLLABLE_ID);
 
         let control: iced::Element<_> =
             iced::widget::button("Start processing")

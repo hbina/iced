@@ -10,13 +10,13 @@ async-std = "1.13.0"
 etherparse = "0.16.0"
 iced.features = ["tokio"]
 iced.workspace = true
-once_cell.workspace = true
-# pcap-parser = "0.16.0"
-pcap-parser = { path = "/home/hbina085/git/pcap-parser" }
+# once_cell.workspace = true
+pcap-parser = "0.17.0"
 bytemuck = "1.20.0"
 memmap2 = "0.9.5"
 smol_str.workspace = true
 async-trait = "0.1.83"
+once_cell = "1.21.0"
 
 [dependencies.reqwest]
 version = "0.12"
