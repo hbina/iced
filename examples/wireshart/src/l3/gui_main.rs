@@ -2,14 +2,17 @@ const SCROLLABLE_ID: &str = "scrollable";
 
 #[derive(Debug)]
 pub struct MainGui {
-    // state: MainContainerState,
+    pcap_path: String,
     rows: Vec<crate::l1::pcap::PcapPointer>,
     expanded: std::collections::HashSet<usize>,
 }
 
 impl MainGui {
-    pub fn new() -> (Self, iced::Task<crate::l2::core::MainGuiMessage>) {
-        (Self::default(), iced::Task::none())
+    pub fn new(pcap_path: String) -> (Self, iced::Task<crate::l2::core::MainGuiMessage>) {
+        (Self {
+            pcap_path,
+            ..Self::default()
+        }, iced::Task::none())
     }
 
     pub fn update(
@@ -42,7 +45,7 @@ impl MainGui {
         &mut self,
     ) -> iced::Task<Result<crate::l1::pcap::PcapPointer, String>> {
         let (task, _) = iced::Task::stream(crate::l1::pcap::process_pcap(
-            "/home/hbina085/Downloads/sample.pcap",
+            self.pcap_path.clone(),
         ))
         .abortable();
         task
@@ -97,6 +100,7 @@ impl MainGui {
 impl Default for MainGui {
     fn default() -> Self {
         Self {
+            pcap_path: String::from(""), // Placeholder, will be replaced by user input
             rows: Vec::default(),
             expanded: std::collections::HashSet::default(),
         }

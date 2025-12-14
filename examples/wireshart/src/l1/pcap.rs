@@ -2,7 +2,7 @@ use iced::futures::channel::mpsc;
 use iced::futures::{SinkExt, Stream};
 use iced::stream::try_channel;
 use pcap_parser::traits::PcapReaderIterator;
-use pcap_parser::{LegacyPcapReader, PcapError};
+use pcap_parser::{PcapError, PcapNGReader};
 
 #[derive(Debug, Clone)]
 pub struct PcapPointer {
@@ -19,20 +19,20 @@ pub struct PcapPointer {
 }
 
 pub struct PcapPointerIterator {
-    pcap_reader: LegacyPcapReader<std::io::BufReader<std::fs::File>>,
+    pcap_reader: PcapNGReader<std::io::BufReader<std::fs::File>>,
     pcap_offset: usize,
     reader: std::sync::Arc<std::sync::Mutex<std::fs::File>>,
 }
 
 impl PcapPointerIterator {
-    pub fn new(file_path: &'static str) -> Self {
+    pub fn new(file_path: String) -> Self {
         Self {
-            pcap_reader: LegacyPcapReader::new(
+            pcap_reader: PcapNGReader::new(
                 64 * 1024 * 1024,
                 std::io::BufReader::new(
                     std::fs::OpenOptions::new()
                         .read(true)
-                        .open(file_path)
+                        .open(&file_path)
                         .unwrap(),
                 ),
             )
@@ -41,7 +41,7 @@ impl PcapPointerIterator {
             reader: std::sync::Arc::new(std::sync::Mutex::new(
                 std::fs::OpenOptions::new()
                     .read(true)
-                    .open(file_path)
+                    .open(&file_path)
                     .unwrap(),
             )),
         }
@@ -61,29 +61,23 @@ impl Iterator for PcapPointerIterator {
                     );
                     let res = match block {
                         pcap_parser::PcapBlockOwned::NG(ng) => match ng {
-                            pcap_parser::Block::EnhancedPacket(b) => {
-                                Some(PcapPointer {
-                                    reader: self.reader.clone(),
-                                    pcap_offset: self.pcap_offset,
-                                    pcap_len: b.data.len(),
-                                })
-                            }
-                            pcap_parser::Block::SimplePacket(b) => {
-                                Some(PcapPointer {
-                                    reader: self.reader.clone(),
-                                    pcap_offset: self.pcap_offset,
-                                    pcap_len: b.data.len(),
-                                })
-                            }
-                            _ => None,
-                        },
-                        pcap_parser::PcapBlockOwned::Legacy(b) => {
-                            Some(PcapPointer {
+                            pcap_parser::Block::EnhancedPacket(b) => Some(PcapPointer {
                                 reader: self.reader.clone(),
                                 pcap_offset: self.pcap_offset,
                                 pcap_len: b.data.len(),
-                            })
-                        }
+                            }),
+                            pcap_parser::Block::SimplePacket(b) => Some(PcapPointer {
+                                reader: self.reader.clone(),
+                                pcap_offset: self.pcap_offset,
+                                pcap_len: b.data.len(),
+                            }),
+                            _ => None,
+                        },
+                        pcap_parser::PcapBlockOwned::Legacy(b) => Some(PcapPointer {
+                            reader: self.reader.clone(),
+                            pcap_offset: self.pcap_offset,
+                            pcap_len: b.data.len(),
+                        }),
                         _ => None,
                     };
 
@@ -106,9 +100,7 @@ impl Iterator for PcapPointerIterator {
     }
 }
 
-pub fn process_pcap(
-    file_path: &'static str,
-) -> impl Stream<Item = Result<PcapPointer, String>> {
+pub fn process_pcap(file_path: String) -> impl Stream<Item = Result<PcapPointer, String>> {
     try_channel(1, move |mut output: mpsc::Sender<PcapPointer>| async move {
         for pcap in PcapPointerIterator::new(file_path) {
             output.send(pcap).await.unwrap();
